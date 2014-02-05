@@ -15,7 +15,8 @@ import fr.janalyse.primes.CheckedValue
 
 object PrimesEngine {
   lazy val driver: MongoDriver = new MongoDriver()
-  lazy val use: MongoConnection = driver.connection(List("localhost:27017"))
+  lazy val use: MongoConnection = 
+    driver.connection(List("localhost:27017"), nbChannelsPerNode = 500)
 
   implicit object CheckedValueHandler
     extends BSONDocumentReader[CheckedValue[Long]]
