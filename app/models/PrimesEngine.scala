@@ -1,8 +1,8 @@
 package models
 
 import reactivemongo.api._
-import scala.concurrent.ExecutionContext.Implicits.global
 import reactivemongo.bson.{ BSONDocument => BD }
+import scala.concurrent.ExecutionContext.Implicits.global
 import reactivemongo.bson._
 import reactivemongo.core.commands._
 import scala.concurrent.Future
@@ -15,8 +15,8 @@ import fr.janalyse.primes.CheckedValue
 
 object PrimesEngine {
   lazy val driver: MongoDriver = new MongoDriver()
-  lazy val use: MongoConnection = 
-    driver.connection(List("localhost:27017"), nbChannelsPerNode = 500)
+  lazy val use: MongoConnection =
+    driver.connection(List("localhost:27017"), nbChannelsPerNode = 200)
 
   implicit object CheckedValueHandler
     extends BSONDocumentReader[CheckedValue[Long]]
@@ -38,7 +38,8 @@ object PrimesEngine {
     }
   }
 
-  def populatePrimesIfRequired(howmany: Int = 10000) {
+  def populatePrimesIfRequired(upTo: Long = 100000) = synchronized {
+
     import math._
     val db = use("primes")
     val primes = db("values")
@@ -53,7 +54,7 @@ object PrimesEngine {
         _ <- impacted.insert(checked)
       } yield 'done
 
-      Await.ready(Future.sequence(List(f1, f2)), 5.second)
+      Await.ready(Future.sequence(List(f1, f2)), 5.seconds)
     }
 
     val fall = for {
@@ -71,27 +72,42 @@ object PrimesEngine {
       val notPrimeNth = foundLastNotPrime.map(_.nth).getOrElse(0L)
       val resuming = foundLast.isDefined
 
-      val resumedStream = pgen.checkedValues(foundLast.getOrElse(CheckedValue.first), primeNth, notPrimeNth) match {
+      var resumedStream = pgen.checkedValues(foundLast.getOrElse(CheckedValue.first), primeNth, notPrimeNth) match {
         case s if resuming => s.tail
         case s => s
       }
+      var howmany = upTo - resumedStream.head.value
+      while (howmany > 0) {
+        insert(resumedStream.head)
+        resumedStream = resumedStream.tail
+        howmany -= 1
+      }
 
-      for { checkedValue <- resumedStream.take(howmany) } { insert(checkedValue) }
-      'done
+      'started
     }
     fall.onFailure {
       case x =>
         println(x.toString)
         println("NOK - try create an index on value field of primes collection")
     }
-    Await.ready(fall, 30.minutes)
+    //Await.ready(fall, 30.minutes)
+    fall
   }
 
-  
-  def check(num:Long):Future[Option[CheckedValue[Long]]] = {
-     val db = use("primes")
-     val primes = db("values")
-     
-     primes.find(BD("value" -> num)).one[CheckedValue[Long]]
+  def check(num: Long): Future[Option[CheckedValue[Long]]] = {
+    val db = use("primes")
+    val primes = db("values")
+    primes.find(BD("value" -> num)).one[CheckedValue[Long]]
   }
+
+  def listPrimes(from: Long = 0l, to: Long = Long.MaxValue) = {
+    val db = use("primes")
+    val primes = db("values")
+    val request =
+      BD("isPrime" -> true,
+        "value" -> BD("$gte" -> from, "$lte" -> to))
+
+    primes.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].enumerate()
+  }
+
 }
