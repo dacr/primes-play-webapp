@@ -9,6 +9,7 @@ GET     /prime/:nth                 controllers.Application.prime(nth:Long)
 GET     /primes/:to                 controllers.Application.primesTo(to:Long)
 GET     /primes/:from/:to           controllers.Application.primesFromTo(from:Long, to:Long)
 GET     /populate/:to               controllers.Application.populate(to:Long)
+GET     /ulam/:sz                   controllers.Application.ulam(sz:Int)
 
 
 # Map static resources from the /public folder to the /assets URL path
