@@ -18,6 +18,8 @@ object PrimesEngine {
   lazy val use: MongoConnection =
     driver.connection(List("localhost:27017"), nbChannelsPerNode = 200)
 
+  val pgen = new PrimesGenerator[Long]
+    
   implicit object CheckedValueHandler
     extends BSONDocumentReader[CheckedValue[Long]]
     with BSONDocumentWriter[CheckedValue[Long]] {
@@ -61,8 +63,6 @@ object PrimesEngine {
       foundLastPrime <- lastPrime.find(BD()).cursor[CheckedValue[Long]].headOption
       foundLastNotPrime <- lastNotPrime.find(BD()).cursor[CheckedValue[Long]].headOption
     } yield {
-      val pgen = new PrimesGenerator[Long]
-
       val foundLast = for {
         flp <- foundLastPrime
         flnp <- foundLastNotPrime
@@ -90,7 +90,7 @@ object PrimesEngine {
         println(x.toString)
         println("NOK - try create an index on value field of primes collection")
     }
-    //Await.ready(fall, 30.minutes)
+
     fall
   }
 
@@ -108,6 +108,16 @@ object PrimesEngine {
         "value" -> BD("$gte" -> from, "$lte" -> to))
 
     primes.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].enumerate()
+  }
+  
+  def ulam(sz:Int) = {
+    val db = use("primes")
+    val primes = db("values")
+    val request =BD("isPrime" -> true)
+    val it = primes.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].toList()
+    it.map{ lst =>
+      pgen.ulamSpiral(sz, lst.iterator)
+    }
   }
 
 }

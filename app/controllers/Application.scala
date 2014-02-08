@@ -8,7 +8,6 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import concurrent._
 import play.api.libs.iteratee.Enumerator
 
-
 object Application extends Controller {
 
   def index = Action {
@@ -24,20 +23,31 @@ object Application extends Controller {
     }
     fcontent.map(Ok(_))
   }
-  
-  def primesTo(to:Long) = Action {
-	  val content = PrimesEngine.listPrimes(to=to).map(x => s"${x.value}\n")
-	  Ok.chunked(content)
-  }
-  
-  def primesFromTo(from:Long, to:Long) = Action {
-	  val content = PrimesEngine.listPrimes(from=from, to=to).map(x => s"${x.value}\n")
-	  Ok.chunked(content)
+
+  def primesTo(to: Long) = Action {
+    val content = PrimesEngine.listPrimes(to = to).map(x => s"${x.value}\n")
+    Ok.chunked(content)
   }
 
-  def populate(to:Long) = Action.async {
+  def primesFromTo(from: Long, to: Long) = Action {
+    val content = PrimesEngine.listPrimes(from = from, to = to).map(x => s"${x.value}\n")
+    Ok.chunked(content)
+  }
+
+  def populate(to: Long) = Action.async {
     val fresult = PrimesEngine.populatePrimesIfRequired(to)
     fresult.map(r => Ok(r.toString))
   }
-  
+
+  def ulam(sz: Int) = Action.async {
+    import javax.imageio.ImageIO
+    import java.io._
+
+    PrimesEngine.ulam(sz) map { bufferImage =>
+      val out = new ByteArrayOutputStream()
+      ImageIO.write(bufferImage, "PNG", out)
+      Ok(out.toByteArray).as("image/png")
+    }
+  }
+
 }
