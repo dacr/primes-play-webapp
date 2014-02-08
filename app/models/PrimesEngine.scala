@@ -100,6 +100,13 @@ object PrimesEngine {
     primes.find(BD("value" -> num)).one[CheckedValue[Long]]
   }
 
+  def getPrime(nth:Long) = {
+    val db = use("primes")
+    val primes = db("values")
+    val request = BD("isPrime" -> true,"nth" -> nth)
+    primes.find(request).one[CheckedValue[Long]]
+  }
+  
   def listPrimes(from: Long = 0l, to: Long = Long.MaxValue) = {
     val db = use("primes")
     val primes = db("values")

@@ -24,9 +24,18 @@ object Application extends Controller {
     fcontent.map(Ok(_))
   }
 
-  def primesTo(to: Long) = Action {
-    val content = PrimesEngine.listPrimes(to = to).map(x => s"${x.value}\n")
-    Ok.chunked(content)
+  def prime(nth:Long) = Action.async {
+    val fresult = PrimesEngine.getPrime(nth)
+    val fcontent = fresult map {
+      case Some(found) => s"prime#$nth is ${found.value}"
+      case None => s"Not in the database, launch populate with the right limit"
+    }
+    fcontent.map(Ok(_))
+  }
+  
+  def primesTo(to:Long) = Action {
+	  val content = PrimesEngine.listPrimes(to=to).map(x => s"${x.value}\n")
+	  Ok.chunked(content)
   }
 
   def primesFromTo(from: Long, to: Long) = Action {
