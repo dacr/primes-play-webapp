@@ -121,6 +121,7 @@ object PrimesEngine {
     val db = use("primes")
     val primes = db("values")
     val request =BD("isPrime" -> true, "value"-> BD("$lte" -> sz.toLong*sz))
+    println(BD.pretty(request))
     val it = primes.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].collect[List]()
     it.map{ lst =>
       println(""+sz+" "+lst.size)
