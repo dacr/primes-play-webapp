@@ -5,6 +5,7 @@
 # Home page
 GET     /                           controllers.Application.index
 GET     /check/:num                 controllers.Application.check(num:Long)
+GET		/factors/:num				controllers.Application.factors(num:Long)
 GET     /prime/:nth                 controllers.Application.prime(nth:Long)
 GET     /primes/:to                 controllers.Application.primesTo(to:Long)
 GET     /primes/:from/:to           controllers.Application.primesFromTo(from:Long, to:Long)

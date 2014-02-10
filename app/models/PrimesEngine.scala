@@ -121,12 +121,20 @@ object PrimesEngine {
     val db = use("primes")
     val primes = db("values")
     val request =BD("value"-> BD("$lte" -> sz.toLong*sz))
-    println(BD.pretty(request))
     val it = primes.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].collect[List]()
     it.map{ lst =>
-      println(""+sz+" "+lst.size)
       pgen.ulamSpiral(sz, lst.iterator)
     }
   }
 
+  
+  def factorize(num:Long) = {
+    val db = use("primes")
+    val primes = db("values")
+    val request =BD("isPrime"->true, "value"-> BD("$lte" -> num))
+    val it = primes.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].collect[List]()
+    it.map { lst =>
+      pgen.factorize(num,lst.map(_.value).iterator)
+    }
+  }
 }

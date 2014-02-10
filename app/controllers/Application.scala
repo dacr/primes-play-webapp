@@ -59,4 +59,13 @@ object Application extends Controller {
     }
   }
 
+  def factors(num:Long) = Action.async {
+    val fresult = PrimesEngine.factorize(num)
+    val fcontent = fresult  map {
+      case Some(found) => s"""$num = ${found.mkString("*")}"""
+      case None => s"Not enough primes available in the database"
+    }
+    fcontent.map(Ok(_))
+  }
+  
 }
