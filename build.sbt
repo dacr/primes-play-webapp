@@ -10,7 +10,7 @@ libraryDependencies ++= Seq(
 
 libraryDependencies ++= Seq(
    "org.reactivemongo" %% "reactivemongo" % "0.10.0",
-   "fr.janalyse" %% "primes" % "1.0.6"  
+   "fr.janalyse" %% "primes" % "1.0.7"  
 )
 
 resolvers ++= Seq(
