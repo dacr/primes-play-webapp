@@ -6,7 +6,9 @@ import fr.janalyse.primes.PrimesGenerator
 import models.PrimesEngine
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import concurrent._
+import concurrent.duration._
 import play.api.libs.iteratee.Enumerator
+import play.libs.Akka
 
 object Application extends Controller {
 
@@ -24,6 +26,27 @@ object Application extends Controller {
     fcontent.map(Ok(_))
   }
 
+  
+  def slowcheck(num: Long, delayInSeconds:Long=10) = Action.async {
+    val thepromise = Promise[String]()
+
+    Akka.system.scheduler.scheduleOnce(delayInSeconds.seconds) {
+      thepromise success s"I'm slow, $delayInSeconds seconds"
+    }
+    val fcontent = for {
+      result <- PrimesEngine.check(num)
+      _ <- thepromise.future
+    } yield {
+      result match {
+      case Some(chk) if chk.isPrime => s"$num is a prime, position ${chk.nth}th"
+      case Some(chk) => s"$num is not a prime, position ${chk.nth}th"
+      case None => s"Don't know if $num is prime, not in the database"
+      }
+    }
+    fcontent.map(Ok(_))
+  }
+
+  
   def prime(nth:Long) = Action.async {
     val fresult = PrimesEngine.getPrime(nth)
     val fcontent = fresult map {
