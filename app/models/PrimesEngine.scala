@@ -40,7 +40,7 @@ object PrimesEngine {
     }
   }
 
-  def populatePrimesIfRequired(upTo: Long = 100000) = synchronized {
+  private def populatePrimesIfRequired(upTo: Long = 100000) = {
 
     import math._
     val db = use("primes")
@@ -83,7 +83,7 @@ object PrimesEngine {
         howmany -= 1
       }
 
-      'started
+      'done
     }
     fall.onFailure {
       case x =>
@@ -94,6 +94,15 @@ object PrimesEngine {
     fall
   }
 
+  var worker:Option[Future[Symbol]]=None
+  def populate(upTo:Long) = this.synchronized {
+    if (worker.isEmpty || worker.get.isCompleted) {
+      val populateFuture = populatePrimesIfRequired(upTo)
+      worker = Some(populateFuture)
+      populateFuture
+    } else 'AlreadyInProgress
+  }
+  
   def check(num: Long): Future[Option[CheckedValue[Long]]] = {
     val db = use("primes")
     val primes = db("values")
