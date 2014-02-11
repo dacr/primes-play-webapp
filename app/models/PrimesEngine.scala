@@ -100,7 +100,7 @@ object PrimesEngine {
       val populateFuture = populatePrimesIfRequired(upTo)
       worker = Some(populateFuture)
       populateFuture
-    } else 'AlreadyInProgress
+    } else concurrent.future {'AlreadyInProgress}
   }
   
   def check(num: Long): Future[Option[CheckedValue[Long]]] = {

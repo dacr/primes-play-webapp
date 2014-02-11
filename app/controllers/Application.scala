@@ -44,7 +44,7 @@ object Application extends Controller {
   }
 
   def populate(to: Long) = Action.async {
-    val fresult = PrimesEngine.populatePrimesIfRequired(to)
+    val fresult = PrimesEngine.populate(to)
     fresult.map(r => Ok(r.toString))
   }
 
