@@ -1,12 +1,15 @@
-@(message: String)
+@(message: String, valuesCount:Int, primesCount:Int, highestPrime:Long)
 
 @main("Welcome to Play") {
 
     <h1>@message</h1>
+    The database cache contains @valuesCount already checked values, with @primesCount primes found.
+    The highest found prime is @highestPrime
 	<h2>The API</h2>
 	<ul>
 	  <li>check/<i>$num</i> : to test if <i>$num</i> is a prime number or not</li>
-	  <li>prime/<i>$nth</i> : to get the nth prime, 1 -> 2, 2->3, 3->5, 4->7
+	  <li>slowcheck/<i>$num</i>/<i>$secs</i> : to test if <i>$num</i> is a prime number or not, and wait <i>$secs</i> seconds at server side, this is for test purposes</li>
+	  <li>prime/<i>$nth</i> : to get the nth prime, 1 -> 2, 2->3, 3->5, 4->7</li>
 	  <li>factors/<i>$num</i> : to get the primer factors of <i>$num</i></li> 
 	  <li>primes/<i>$to</i> : list primes up to <i>$to</i></li>
 	  <li>primes/<i>$form</i>/<i>$to</i> : list primes from <i>$from</i> to <i>$to</i></li>

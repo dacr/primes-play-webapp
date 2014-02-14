@@ -16,7 +16,8 @@ import fr.janalyse.primes.CheckedValue
 object PrimesEngine {
   lazy val driver: MongoDriver = new MongoDriver()
   lazy val use: MongoConnection =
-    driver.connection(List("localhost:27017"), nbChannelsPerNode = 200)
+    driver.connection(List("localhost:27017"), nbChannelsPerNode = 20)
+  lazy val db = use("primes")
 
   val pgen = new PrimesGenerator[Long]
     
@@ -41,27 +42,17 @@ object PrimesEngine {
   }
 
   private def populatePrimesIfRequired(upTo: Long = 100000) = {
-
     import math._
-    val db = use("primes")
-    val primes = db("values")
-    val lastPrime = db("lastPrime")
-    val lastNotPrime = db("lastNotPrime")
+    val values = db("values")
 
     def insert(checked: CheckedValue[Long]) {
-      val impacted = if (checked.isPrime) lastPrime else lastNotPrime
-      val f1 = primes.insert(checked)
-      val f2 = for {
-        _ <- impacted.remove(BD())
-        _ <- impacted.insert(checked)
-      } yield 'done
-
-      Await.ready(Future.sequence(List(f1, f2)), 5.seconds)
+      val f1 = values.insert(checked)
+      Await.ready(f1, 60.seconds) // We want to stay in synch
     }
 
     val fall = for {
-      foundLastPrime <- lastPrime.find(BD()).cursor[CheckedValue[Long]].headOption
-      foundLastNotPrime <- lastNotPrime.find(BD()).cursor[CheckedValue[Long]].headOption
+      foundLastPrime <- lastPrime
+      foundLastNotPrime <- lastNotPrime
     } yield {
       val foundLast = for {
         flp <- foundLastPrime
@@ -76,11 +67,10 @@ object PrimesEngine {
         case s if resuming => s.tail
         case s => s
       }
-      var howmany = upTo - resumedStream.head.value
-      while (howmany > 0) {
+
+      while (resumedStream.head.value <= upTo) {
         insert(resumedStream.head)
         resumedStream = resumedStream.tail
-        howmany -= 1
       }
 
       'done
@@ -99,49 +89,62 @@ object PrimesEngine {
     if (worker.isEmpty || worker.get.isCompleted) {
       val populateFuture = populatePrimesIfRequired(upTo)
       worker = Some(populateFuture)
-      populateFuture
-    } else concurrent.future {'AlreadyInProgress}
+      concurrent.future {'JobStarted}
+    } else concurrent.future {'StillInProgress}
   }
   
+  def valuesCount(): Future[Int] = db.command(Count("values"))
+  
+  def primesCount(): Future[Int] = db.command(Count("values", Some(BD("isPrime"->true))))
+
+  def notPrimesCount(): Future[Int] = db.command(Count("values", Some(BD("isPrime"->false))))
+
+  
+  def lastPrime():Future[Option[CheckedValue[Long]]] = {
+    val values = db("values")
+    values.find(BD("isPrime"->true)).sort(BD("nth"-> -1)).one[CheckedValue[Long]]
+  }
+
+  def lastNotPrime():Future[Option[CheckedValue[Long]]] = {
+    val values = db("values")
+    values.find(BD("isPrime"->false)).sort(BD("nth"-> -1)).one[CheckedValue[Long]]
+  }
+  
+  
   def check(num: Long): Future[Option[CheckedValue[Long]]] = {
-    val db = use("primes")
-    val primes = db("values")
-    primes.find(BD("value" -> num)).one[CheckedValue[Long]]
+    val values = db("values")
+    values.find(BD("value" -> num)).one[CheckedValue[Long]]
   }
 
   def getPrime(nth:Long) = {
-    val db = use("primes")
-    val primes = db("values")
+    val values = db("values")
     val request = BD("isPrime" -> true,"nth" -> nth)
-    primes.find(request).one[CheckedValue[Long]]
+    values.find(request).one[CheckedValue[Long]]
   }
   
   def listPrimes(from: Long = 0l, to: Long = Long.MaxValue) = {
-    val db = use("primes")
-    val primes = db("values")
+    val values = db("values")
     val request =
       BD("isPrime" -> true,
         "value" -> BD("$gte" -> from, "$lte" -> to))
 
-    primes.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].enumerate()
+    values.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].enumerate()
   }
   
   def ulam(sz:Int) = {
-    val db = use("primes")
-    val primes = db("values")
+    val values = db("values")
     val request =BD("value"-> BD("$lte" -> sz.toLong*sz))
-    val it = primes.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].collect[List]()
+    val it = values.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].collect[Iterator]()
     it.map{ lst =>
-      pgen.ulamSpiral(sz, lst.iterator)
+      pgen.ulamSpiral(sz, lst)
     }
   }
 
   
   def factorize(num:Long) = {
-    val db = use("primes")
-    val primes = db("values")
+    val values = db("values")
     val request =BD("isPrime"->true, "value"-> BD("$lte" -> num))
-    val it = primes.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].collect[List]()
+    val it = values.find(request).sort(BD("value" -> 1)).cursor[CheckedValue[Long]].collect[List]()
     it.map { lst =>
       pgen.factorize(num,lst.map(_.value).iterator)
     }

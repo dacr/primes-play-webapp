@@ -12,8 +12,12 @@ import play.libs.Akka
 
 object Application extends Controller {
 
-  def index = Action {
-    Ok(views.html.index("Prime web application is ready."))
+  def index = Action.async {
+    for {
+      valuesCount <- PrimesEngine.valuesCount()
+      primesCount <- PrimesEngine.primesCount()
+      lastPrime <- PrimesEngine.lastPrime()
+    } yield Ok(views.html.index("Prime web application is ready.", valuesCount, primesCount, lastPrime.map(_.value).getOrElse(0L)))
   }
 
   def check(num: Long) = Action.async {
@@ -27,11 +31,11 @@ object Application extends Controller {
   }
 
   
-  def slowcheck(num: Long, delayInSeconds:Long=10) = Action.async {
+  def slowcheck(num: Long, secs:Long=10) = Action.async {
     val thepromise = Promise[String]()
 
-    Akka.system.scheduler.scheduleOnce(delayInSeconds.seconds) {
-      thepromise success s"I'm slow, $delayInSeconds seconds"
+    Akka.system.scheduler.scheduleOnce(secs.seconds) {
+      thepromise success s"I'm slow, $secs seconds"
     }
     val fcontent = for {
       result <- PrimesEngine.check(num)
