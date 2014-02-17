@@ -42,45 +42,22 @@ object PrimesEngine {
   }
 
   private def populatePrimesIfRequired(upTo: Long = 100000) = {
-    import math._
     val values = db("values")
-
-    def insert(checked: CheckedValue[Long]) {
-      val f1 = values.insert(checked)
-      Await.ready(f1, 60.seconds) // We want to stay in synch
-    }
-
     val fall = for {
       foundLastPrime <- lastPrime
       foundLastNotPrime <- lastNotPrime
     } yield {
-      val foundLast = for {
-        flp <- foundLastPrime
-        flnp <- foundLastNotPrime
-      } yield if (flp.value > flnp.value) flp else flnp
-
-      val primeNth = foundLastPrime.map(_.nth).getOrElse(1L)
-      val notPrimeNth = foundLastNotPrime.map(_.nth).getOrElse(0L)
-      val resuming = foundLast.isDefined
-
-      var resumedStream = pgen.checkedValues(foundLast.getOrElse(CheckedValue.first), primeNth, notPrimeNth) match {
-        case s if resuming => s.tail
-        case s => s
-      }
-
+      var resumedStream = pgen.checkedValues(foundLastPrime, foundLastNotPrime)
       while (resumedStream.head.value <= upTo) {
-        insert(resumedStream.head)
+        val f1 = values.insert(resumedStream.head)
+        Await.ready(f1, 60.seconds) // We want to stay in synch
         resumedStream = resumedStream.tail
       }
-
       'done
     }
     fall.onFailure {
-      case x =>
-        println(x.toString)
-        println("NOK - try create an index on value field of primes collection")
+      case x => println(s"NOK - ${x.getMessage()} - add indexes on values collection")
     }
-
     fall
   }
 
