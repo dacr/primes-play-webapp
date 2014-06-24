@@ -17,20 +17,34 @@ object Application extends Controller {
       valuesCount <- PrimesEngine.valuesCount()
       primesCount <- PrimesEngine.primesCount()
       lastPrime <- PrimesEngine.lastPrime()
-    } yield Ok(views.html.index("Prime web application is ready.", valuesCount, primesCount, lastPrime.map(_.value).getOrElse(0L)))
-  }
-
-  def check(num: Long) = Action.async {
-    val fresult = PrimesEngine.check(num)
-    val fcontent = fresult map {
-      case Some(chk) if chk.isPrime => s"$num is a prime, position ${chk.nth}th"
-      case Some(chk) => s"$num is not a prime, position ${chk.nth}th"
-      case None => s"Don't know if $num is prime, not in the database"
-    }
-    fcontent.map(Ok(_))
+    } yield Ok(views.html.index(
+        "Prime web application is ready.",
+        valuesCount,
+        primesCount,
+        lastPrime.map(_.value).getOrElse(0L),
+        false))
   }
 
   
+  private def checkContent(num:Long):Future[String] = {
+    val fresult = PrimesEngine.check(num)
+    fresult map {
+      case Some(chk) if chk.isPrime => s"$num is the ${chk.nth}th prime"
+      case Some(chk) => s"$num is the ${chk.nth}th not prime"
+      case None => s"Don't know if $num is a prime, not in the database"
+    }    
+  }
+  
+  def check(num: Long) = Action.async {
+    checkContent(num).map(msg=> Ok(views.html.check(msg, None)))
+  }
+  
+  def rcheck = Action.async {
+    val last=PrimesEngine.valuesCount
+    val rnum=(math.random*20000d).toLong
+    checkContent(rnum).map(msg => Ok(views.html.check(msg, Some(routes.Application.rcheck))))
+  }
+
   def slowcheck(num: Long, secs:Long=10) = Action.async {
     val thepromise = Promise[String]()
 

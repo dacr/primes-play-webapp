@@ -1,0 +1,11 @@
+@(title:String, from:Option[Call])(result:Html)
+
+@main(title) {
+   <h1>@result</h1>
+   <p>
+   @for(f<-from) {
+   	  <i><a href=@from>Again</a></i> -
+   	}
+   <i><a href=@routes.Application.index>Back to the menu</a></i>
+   </p>
+}

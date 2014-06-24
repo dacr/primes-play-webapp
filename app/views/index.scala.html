@@ -1,12 +1,20 @@
-@(message: String, valuesCount:Int, primesCount:Int, highestPrime:Long)
+@(message: String, valuesCount:Int, primesCount:Int, highestPrime:Long, withCache:Boolean)
 
 @main("Welcome to Play") {
 
-    <h1>@message</h1>
-    The database cache contains @valuesCount already checked values, with @primesCount primes found.
-    The highest found prime is @highestPrime
+    <h1>Primes web application is ready.</h1>
+    The database cache contains <b>@valuesCount</b>
+    already checked values, with <b>@primesCount</b>
+    primes found.
+    The highest found prime is <b>@highestPrime</b>.
+    The application cache is <b>@if(withCache) {enabled} else {disabled}</b>.
+    
 	<h2>The API</h2>
 	<ul>
+          <li><b>check/</b><i>$num</i> : to test if <i>$num</i> is a prime number or not.
+                check a <a href=@routes.Application.rcheck() >random value</a>.
+          </li>
+          
 	  <li>check/<i>$num</i> : to test if <i>$num</i> is a prime number or not</li>
 	  <li>slowcheck/<i>$num</i>/<i>$secs</i> : to test if <i>$num</i> is a prime number or not, and wait <i>$secs</i> seconds at server side, this is for test purposes</li>
 	  <li>prime/<i>$nth</i> : to get the nth prime, 1 -> 2, 2->3, 3->5, 4->7</li>

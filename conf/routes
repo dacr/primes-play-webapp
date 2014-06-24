@@ -5,6 +5,7 @@
 # Home page
 GET     /                           controllers.Application.index
 GET     /check/:num                 controllers.Application.check(num:Long)
+GET     /rcheck                     controllers.Application.rcheck
 GET     /slowcheck/:num             controllers.Application.slowcheck(num:Long,secs:Long=10L)
 GET     /slowcheck/:num/:secs       controllers.Application.slowcheck(num:Long,secs:Long)
 GET		/factors/:num				controllers.Application.factors(num:Long)
