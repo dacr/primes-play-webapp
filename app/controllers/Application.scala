@@ -9,6 +9,7 @@ import concurrent._
 import concurrent.duration._
 import play.api.libs.iteratee.Enumerator
 import play.libs.Akka
+import scala.util.{Try,Success,Failure}
 
 object Application extends Controller {
 
@@ -104,9 +105,28 @@ object Application extends Controller {
     val fresult = PrimesEngine.factorize(num)
     val fcontent = fresult  map {
       case Some(found) => s"""$num = ${found.mkString("*")}"""
-      case None => s"Not enough primes available in the database"
+      case None => s"Not enough primes available in the database for $num"
     }
     fcontent.map(Ok(_))
   }
   
+  
+  def rfactors = Action.async {
+    val fresult = 
+      PrimesEngine
+         .lastCheckedValue
+         .map(_.map(_.value))
+         .flatMap{
+      case Some(last) =>
+        val r = (math.random*last).toLong
+        PrimesEngine.factorize(r).map(r -> _)
+      case None => Future {0L->None}
+      }
+         
+    val fcontent = fresult  map {
+      case (num, Some(found)) => s"""$num = ${found.mkString("*")}"""
+      case (num, None) => s"Not enough primes available in the database for $num"
+    }
+    fcontent.map(Ok(_))  
+  }
 }

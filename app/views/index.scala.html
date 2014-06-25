@@ -3,25 +3,56 @@
 @main("Welcome to Play") {
 
     <h1>Primes web application is ready.</h1>
+    <p style="color:red"><b><i>play / mongodb release of primes ui web application, reactive design.</i></b>
+    </p>
     The database cache contains <b>@valuesCount</b>
     already checked values, with <b>@primesCount</b>
     primes found.
     The highest found prime is <b>@highestPrime</b>.
     The application cache is <b>@if(withCache) {enabled} else {disabled}</b>.
     
-	<h2>The API</h2>
-	<ul>
+	    <h2>The API</h2>
+	    <ul>
           <li><b>check/</b><i>$num</i> : to test if <i>$num</i> is a prime number or not.
                 check a <a href=@routes.Application.rcheck() >random value</a>.
           </li>
           
-	  <li>check/<i>$num</i> : to test if <i>$num</i> is a prime number or not</li>
-	  <li>slowcheck/<i>$num</i>/<i>$secs</i> : to test if <i>$num</i> is a prime number or not, and wait <i>$secs</i> seconds at server side, this is for test purposes</li>
-	  <li>prime/<i>$nth</i> : to get the nth prime, 1 -> 2, 2->3, 3->5, 4->7</li>
-	  <li>factors/<i>$num</i> : to get the primer factors of <i>$num</i></li> 
-	  <li>primes/<i>$to</i> : list primes up to <i>$to</i></li>
-	  <li>primes/<i>$form</i>/<i>$to</i> : list primes from <i>$from</i> to <i>$to</i></li>
-	  <li>populate/<i>$upTo</i> : populate the database up to the specified value. Take care it calls a synchronized method.</li>
-	  <li>ulam/<i>$size</i> : Dynamically draw an ulam spiral with the give <i>$size</i>. Take care of your CPUs and Heap ; this is a server side computation</li>
+          <li><b>prime/</b><i>$nth</i> : to get the nth prime, 1 -> 2, 2->3, 3->5, 4->7</li>
+          <li><b>factors/</b><i>$num</i> : to get the prime factors of <i>$num</i>.
+               prime factors of a <a href=@routes.Application.rfactors>random value.</a>
+          </li>
+          <li><b>primes/</b><i>$below</i> : list primes lower than <i>$below</i></li>
+          <li><b>primes/</b><i>$below</i>/<i>$above</i> : list primes which are lower than <i>$below</i> and greater than <i>$above</i></li>
+
+          <li><b>populate/</b><i>$upTo</i> : populate the database up to the specified value. A background job is started.
+            Populate up to 
+             <a href=@routes.Application.populate(10000)>10K</a>,
+             <a href=@routes.Application.populate(25000)>25K</a>,
+             <a href=@routes.Application.populate(50000)>50K</a>,
+             <a href=@routes.Application.populate(100000)>100K</a>,
+             <a href=@routes.Application.populate(250000)>250K</a>,
+             <a href=@routes.Application.populate(500000)>500K</a>
+          </li>
+          <li><b>ulam/</b><i>$size</i> : Dynamically draw an ulam spiral with the give <i>$size</i>. Take care of your CPUs and Heap ; this is a server side computation.
+            Example for various size :
+              <a href=@routes.Application.ulam(128)>128</a>, 
+              <a href=@routes.Application.ulam(256)>256</a>, 
+              <a href=@routes.Application.ulam(512)>512</a>,
+              <a href=@routes.Application.ulam(1024)>1024</a> 
+          </li>
+        </ul>
+        
+        <h2>For testing purposes...</h2>
+          <ul>
+            <li><b>slowcheck/</b><i>$num</i>/<i>$secs</i> : to test if <i>$num</i> is a prime number or not, and wait <i>$secs</i> seconds at server side, this is for test purposes, default is 1 second</li>
+            <li><b>leakedcheck/</b><i>$num</i>/<i>$howmany</i> : to test if <i>$num</i> is a prime number or not, and leak <i>$howmany</i> megabytes at server side, this is for test purposes, default is 1Mb</li>
+            <li><b>big/</b><i></i>$howmanyKB : to test a response with an approximative size of <i>$howmany</i> kilobytes, default is 3Mb</li>
+          </ul>
+          
+        <h2>Admin</h2>
+        <ul>
+          <li><a href={url("/config")}>Application configuration</a></li>
+        </ul>
+
 	</ul>
 }

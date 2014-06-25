@@ -9,6 +9,7 @@ GET     /rcheck                     controllers.Application.rcheck
 GET     /slowcheck/:num             controllers.Application.slowcheck(num:Long,secs:Long=10L)
 GET     /slowcheck/:num/:secs       controllers.Application.slowcheck(num:Long,secs:Long)
 GET		/factors/:num				controllers.Application.factors(num:Long)
+GET		/rfactors					controllers.Application.rfactors
 GET     /prime/:nth                 controllers.Application.prime(nth:Long)
 GET     /primes/:to                 controllers.Application.primesTo(to:Long)
 GET     /primes/:from/:to           controllers.Application.primesFromTo(from:Long, to:Long)

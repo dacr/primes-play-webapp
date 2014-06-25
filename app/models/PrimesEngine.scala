@@ -87,6 +87,11 @@ object PrimesEngine {
     values.find(BD("isPrime"->false)).sort(BD("nth"-> -1)).one[CheckedValue[Long]]
   }
   
+  def lastCheckedValue():Future[Option[CheckedValue[Long]]] = {
+    val values = db("values")
+    values.find(BD()).sort(BD("nth"-> -1)).one[CheckedValue[Long]]
+  }
+  
   
   def check(num: Long): Future[Option[CheckedValue[Long]]] = {
     val values = db("values")
